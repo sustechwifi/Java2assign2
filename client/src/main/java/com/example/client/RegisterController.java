@@ -27,7 +27,13 @@ public class RegisterController {
     protected void register() throws IOException {
         String usn = username.getText();
         String psw = password.getText();
+        if(!confirm.getText().equals(psw)){
+            return;
+        }
         System.out.println(usn + "|" + psw);
+        if(UserService.checkName(usn)){
+            UserService.register(new User(null,usn,psw));
+        }
     }
 
     @FXML

@@ -9,6 +9,8 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class LoginController {
+    public User user;
+
     @FXML
     Button home;
 
@@ -28,10 +30,16 @@ public class LoginController {
     TextField password;
 
     @FXML
-    protected void login() {
+    protected void login() throws IOException {
         String usn = username.getText();
         String psw = password.getText();
         System.out.println(usn + "|" + psw);
+        User user = new User(null, usn, psw);
+        boolean login = UserService.login(user);
+        this.user = user;
+        if(login){
+            toHome();
+        }
     }
 
     @FXML
@@ -45,6 +53,6 @@ public class LoginController {
     protected void toHome() throws IOException {
         var stage = ClientApplication.gameStage;
         stage.close();
-        ClientApplication.home(stage);
+        ClientApplication.home(stage,this.user);
     }
 }

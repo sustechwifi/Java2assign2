@@ -16,7 +16,7 @@ import java.util.Scanner;
 
 
 public class ServerApplication extends Application {
-
+    public static ConnectController view;
     private ServerSocket serverSocket;
 
     class MyThread extends Thread {
@@ -24,21 +24,23 @@ public class ServerApplication extends Application {
         public void run() {
             try {
                 serverSocket = new ServerSocket(8080);
-                List<Thread> threads = new ArrayList<>();
+                List<Socket> clients = new ArrayList<>();
                 while (true) {
                     Socket incoming = serverSocket.accept();
-                    var t = new Thread(new ThreadHandler(incoming,threads.size() == 1));
-                    threads.add(t);
+                    clients.add(incoming);
+                    System.out.println("client address:"+incoming);
                     var in = new Scanner(incoming.getInputStream(), StandardCharsets.UTF_8);
                     var out = new PrintWriter(new OutputStreamWriter(
                             incoming.getOutputStream(),StandardCharsets.UTF_8),true);
                     String line = in.nextLine();
                     System.out.println(line);
-                    String chess = threads.size() == 1 ? "cross" : "circle";
+                    view.users.add(in.nextLine());
+                    view.reLoadUserList();
+                    String chess = clients.size() == 1 ? "cross" : "circle";
                     out.println("Hello client,please wait patiently, you hold "+ chess);
-                    if(threads.size() == 2){
-                        new GameThread(threads.get(0),threads.get(1),incoming).start();
-                        threads.clear();
+                    if(clients.size() == 2){
+                        new ServerGameThread(clients.get(0),clients.get(1)).start();
+                        clients.clear();
                     }
                 }
             } catch (IOException e) {
@@ -58,6 +60,7 @@ public class ServerApplication extends Application {
         Scene scene = new Scene(fxmlLoader.load(), 320, 240);
         stage.setTitle("Hello!");
         stage.setScene(scene);
+        view = fxmlLoader.getController();
         stage.show();
     }
 
