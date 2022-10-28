@@ -1,6 +1,7 @@
 package com.example.client;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.text.Font;
@@ -61,7 +62,7 @@ public class ClientApplication extends Application {
     }
 
 
-    public static void startGame(Stage stage, Socket s, boolean isFirst) throws IOException, InterruptedException {
+    public static void startGame(Stage stage, Socket s, boolean isFirst) throws Exception {
         gameStage = stage;
         FXMLLoader fxmlLoader = new FXMLLoader(ClientApplication.class.getResource("client.fxml"));
         primaryScene = new Scene(fxmlLoader.load(), 800, 600);
@@ -70,10 +71,15 @@ public class ClientApplication extends Application {
         stage.setScene(primaryScene);
         var controller = (GameController)fxmlLoader.getController();
         controller.s = s;
+        controller.isCircle = !isFirst;
         stage.show();
         if (!isFirst){
             controller.get();
         }
+    }
+
+    public static void close(){
+        Platform.exit();
     }
 
     public static void main(String[] args) {

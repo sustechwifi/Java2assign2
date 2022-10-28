@@ -62,13 +62,13 @@ public class HomeController {
             }
             System.out.println("game start!");
             startGame();
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @FXML
-    void startGame() throws IOException, InterruptedException {
+    void startGame() throws Exception {
         var stage = ClientApplication.gameStage;
         stage.close();
         ClientApplication.startGame(stage,s,isFirst);

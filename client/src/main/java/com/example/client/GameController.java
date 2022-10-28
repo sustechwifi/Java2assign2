@@ -2,22 +2,28 @@ package com.example.client;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 
-import java.io.IOException;
 import java.net.Socket;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.Arrays;
 
 public class GameController {
     private boolean isCircleTurner = false;
     private static final String CIRCLE_TURNER = "O";
     private static final String CROSS_TURNER = "X";
-    private int winner = 0;
+
+    // 0 no start; 1 playing; 2 win; 3 lost; 4 even
+    
+    private int state;
+    public boolean isCircle;
 
     public Socket s;
     private boolean disable = false;
+    @FXML
+    private Text msg;
+
     @FXML
     private Button btn1;
 
@@ -47,6 +53,7 @@ public class GameController {
 
     int curr = 0;
     int cnt = 0;
+    int flag = 0;
 
     int[][] board = new int[3][3];
 
@@ -55,37 +62,42 @@ public class GameController {
     }
 
 
-    private void gameOver() {
+    private void gameOver() throws Exception {
+        ClientGameThread client = new ClientGameThread(flag, false, s);
+        client.start();
         System.out.println("game over");
+        System.out.println("isCircle:" + isCircle);
+        System.out.println(Arrays.deepToString(board));
+        String s;
+        switch (state){
+            case 2 -> s = "win";
+            case 3 -> s = "lost";
+            case 4 -> s = "even";
+            default -> s = "error";
+        }
+        msg.setText(s);
+        msg.setFont(new Font("仿宋", 20));
     }
 
     public void send() {
         try {
-            if (!judge()) {
-                ClientGameThread client = new ClientGameThread(curr, false, s);
-                client.start();
-                client.join();
-                cnt++;
-                get();
-                if (judge()) {
-                    gameOver();
-                }
-            } else {
-                gameOver();
+            if (judge()) {
+                curr *= 10;
             }
-        } catch (IOException | InterruptedException e) {
+            ClientGameThread client = new ClientGameThread(curr, false, s);
+            client.start();
+            client.join();
+            cnt++;
+            get();
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
-    public void get() throws IOException, InterruptedException {
-        disable = true;
-        ClientGameThread client = new ClientGameThread(0, true, s);
-        client.start();
-        client.join();
-        System.out.println(ClientGameThread.res);
-        switch (ClientGameThread.res) {
+    public void control(int c) throws Exception {
+        switch (c) {
+            case 0 -> {return;}
             case 1 -> onButtonClick1();
             case 2 -> onButtonClick2();
             case 3 -> onButtonClick3();
@@ -95,8 +107,22 @@ public class GameController {
             case 7 -> onButtonClick7();
             case 8 -> onButtonClick8();
             case 9 -> onButtonClick9();
-            default -> throw new IllegalStateException("Unexpected value: " + ClientGameThread.res);
+            default -> {
+                flag = c;
+                control(c/10);
+                judge();
+                gameOver();
+            }
         }
+    }
+
+    public void get() throws Exception {
+        disable = true;
+        ClientGameThread client = new ClientGameThread(0, true, s);
+        client.start();
+        client.join();
+        System.out.println(ClientGameThread.res);
+        control(ClientGameThread.res);
         cnt++;
         disable = false;
     }
@@ -156,7 +182,6 @@ public class GameController {
         if (!disable) {
             send();
         }
-        ;
     }
 
     @FXML
@@ -275,30 +300,55 @@ public class GameController {
 
     private boolean judge() {
         if (board[0][0] > 0 && board[0][0] == board[0][1] && board[0][1] == board[0][2]) {
-            System.out.println((board[0][0] == 1 ? "cross" : "circle") + " win");
+            btn1.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn2.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn3.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            state = (isCircle && board[0][0] == 1) || (!isCircle && board[0][0] == 2) ? 2 : 3;
             return true;
         } else if (board[1][0] > 0 && board[1][0] == board[1][1] && board[1][1] == board[1][2]) {
-            System.out.println((board[1][0] == 1 ? "cross" : "circle") + " win");
+            btn4.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn5.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn6.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            state = (isCircle && board[1][0] == 1) || (!isCircle && board[1][0] == 2) ? 2 : 3;
             return true;
         } else if (board[2][0] > 0 && board[2][0] == board[2][1] && board[2][1] == board[2][2]) {
-            System.out.println((board[2][0] == 1 ? "cross" : "circle") + " win");
+            btn7.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn8.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn9.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            state = (isCircle && board[2][0] == 1) || (!isCircle && board[2][0] == 2) ? 2 : 3;
             return true;
         } else if (board[0][0] > 0 && board[0][0] == board[1][0] && board[1][0] == board[2][0]) {
-            System.out.println((board[0][0] == 1 ? "cross" : "circle") + " win");
+            btn1.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn4.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn7.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            state = (isCircle && board[0][0] == 1) || (!isCircle && board[0][0] == 2) ? 2 : 3;
             return true;
         } else if (board[0][1] > 0 && board[0][1] == board[1][1] && board[1][1] == board[2][1]) {
-            System.out.println((board[0][1] == 1 ? "cross" : "circle") + " win");
+            btn2.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn5.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn8.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            state = (isCircle && board[0][1] == 1) || (!isCircle && board[0][1] == 2) ? 2 : 3;
             return true;
         } else if (board[0][2] > 0 && board[0][2] == board[1][2] && board[1][2] == board[2][2]) {
-            System.out.println((board[0][2] == 1 ? "cross" : "circle") + " win");
+            btn3.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn6.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn9.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            state = (isCircle && board[0][2] == 1) || (!isCircle && board[0][2] == 2) ? 2 : 3;
             return true;
         } else if (board[0][0] > 0 && board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
-            System.out.println((board[0][0] == 1 ? "cross" : "circle") + " win");
+            btn1.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn5.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn9.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            state = (isCircle && board[0][0] == 1) || (!isCircle && board[0][0] == 2) ? 2 : 3;
             return true;
         } else if (board[0][2] > 0 && board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
-            System.out.println((board[0][2] == 1 ? "cross" : "circle") + " win");
+            btn3.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn5.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            btn7.setTextFill(Color.rgb(84, 255, 159, 0.7));
+            state = (isCircle && board[0][2] == 1) || (!isCircle && board[0][2] == 2) ? 2 : 3;
             return true;
-        } else if (cnt == 9){
+        } else if (cnt == 9) {
+            state = 4;
             return true;
         } else {
             return false;
