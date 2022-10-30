@@ -1,12 +1,8 @@
 package com.example.client;
 
-import javafx.stage.Stage;
-
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
@@ -14,12 +10,14 @@ import java.util.Scanner;
 public class ClientGameThread extends Thread {
     private final int pos;
     private final boolean type;
-    public static int res;
+    public int res;
+    private GameController controller;
     final Scanner in;
     final PrintWriter out;
 
-    public ClientGameThread(int pos, boolean state, Socket s) throws IOException {
+    public ClientGameThread(int pos, boolean state, Socket s, GameController gameController) throws IOException {
         this.type = state;
+        this.controller = gameController;
         System.out.println("server address:" + s);
         this.pos = pos;
         in = new Scanner(s.getInputStream(), StandardCharsets.UTF_8);
@@ -32,7 +30,7 @@ public class ClientGameThread extends Thread {
         out.println(pos);
     }
 
-    public void get() {
+    public void get() throws Exception {
         String result = in.nextLine();
         if (result != null) {
             res = Integer.parseInt(result);
@@ -42,10 +40,14 @@ public class ClientGameThread extends Thread {
 
     @Override
     public void run() {
-        if (type) {
-            get();
-        } else {
-            send();
+        try {
+            if (type) {
+                get();
+            } else {
+                send();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

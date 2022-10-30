@@ -12,11 +12,13 @@ import java.net.Socket;
 
 public class ClientApplication extends Application {
     static Scene primaryScene;
+    static ClientApplication app;
     public static Stage gameStage;
 
     @Override
     public void start(Stage stage) throws IOException {
         JdbcUtil.getConnection();
+        app = this;
         login(stage);
     }
 

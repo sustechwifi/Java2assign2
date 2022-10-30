@@ -19,11 +19,20 @@
     </padding>
 
     <Text fx:id="info"/>
+    <VBox alignment="CENTER">
+        <HBox>
+            <Button fx:id="getList" text="get UserList" onAction="#getUserList"/>
+            <Button fx:id="setPrepared" text="prepare" onAction="#prepare"/>
+        </HBox>
 
-    <Text text="UserList"/>
-    <HBox alignment="CENTER">
+        <Text text="UserList"/>
         <TextArea fx:id="list"/>
-    </HBox>
+        <HBox>
+            <TextField fx:id="selectUser" text="Choose one user to start"/>
+            <Button fx:id="chooseUser" text="confirm" onAction="#chooseOne"/>
+        </HBox>
+
+    </VBox>
 
     <HBox alignment="CENTER">
         <TextField fx:id="ip" text="localhost"/>

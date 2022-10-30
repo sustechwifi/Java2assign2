@@ -13,35 +13,44 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 
 public class ServerApplication extends Application {
-    public static ConnectController view;
+    public static ViewController view;
+    public int onlineCount = 0;
     private ServerSocket serverSocket;
+
+    ExecutorService executorService = new ThreadPoolExecutor(
+            2,
+            2,
+            0, TimeUnit.SECONDS,
+            new ArrayBlockingQueue<>(512),
+            new ThreadPoolExecutor.DiscardPolicy());
 
     class MyThread extends Thread {
         @Override
         public void run() {
             try {
-                serverSocket = new ServerSocket(8080);
-                List<Socket> clients = new ArrayList<>();
+                serverSocket = new ServerSocket(18080);
                 while (true) {
                     Socket incoming = serverSocket.accept();
-                    clients.add(incoming);
-                    System.out.println("client address:"+incoming);
+                    System.out.println("client address:" + incoming);
                     var in = new Scanner(incoming.getInputStream(), StandardCharsets.UTF_8);
-                    var out = new PrintWriter(new OutputStreamWriter(
-                            incoming.getOutputStream(),StandardCharsets.UTF_8),true);
-                    String line = in.nextLine();
-                    System.out.println(line);
-                    view.users.add(in.nextLine());
+                    String clientAddress = in.nextLine();
+                    String user = in.nextLine();
+                    System.out.println(clientAddress);
+                    onlineCount++;
+                    String msg = user +
+                            (onlineCount % 2 == 0 ? " | cross | " : " | circle | ")
+                            + "(waiting)";
+                    var newUser = new ClientBean(user, msg, incoming, onlineCount % 2 == 0,in);
+                    view.users.put(user, newUser);
                     view.reLoadUserList();
-                    String chess = clients.size() == 1 ? "cross" : "circle";
-                    out.println("Hello client,please wait patiently, you hold "+ chess);
-                    if(clients.size() == 2){
-                        new ServerGameThread(clients.get(0),clients.get(1)).start();
-                        clients.clear();
-                    }
+                    executorService.submit(newUser);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -58,7 +67,7 @@ public class ServerApplication extends Application {
     public void initWindow(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(ServerApplication.class.getResource("connect.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 320, 240);
-        stage.setTitle("Hello!");
+        stage.setTitle("Server");
         stage.setScene(scene);
         view = fxmlLoader.getController();
         stage.show();
