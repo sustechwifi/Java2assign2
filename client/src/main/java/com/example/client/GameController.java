@@ -1,13 +1,18 @@
 package com.example.client;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.Optional;
 
 
 public class GameController {
@@ -24,6 +29,7 @@ public class GameController {
     public Socket s;
     public boolean disable = false;
     public boolean wait = false;
+    public User user;
     @FXML
     private Text msg;
 
@@ -64,7 +70,6 @@ public class GameController {
 
     }
 
-
     private void gameOver() throws Exception {
         ClientGameThread client = new ClientGameThread(flag, false, s, this);
         client.start();
@@ -73,14 +78,40 @@ public class GameController {
         System.out.println("isCircle:" + isCircle);
         System.out.println(Arrays.deepToString(board));
         String s;
+        String msg = "Game over";
         switch (state) {
-            case 2 -> s = "win";
-            case 3 -> s = "lost";
-            case 4 -> s = "even";
+            case 2 -> {
+                s = "win";
+                UserService.updateCount(user.getUsername(), true);
+            }
+            case 3 -> {
+                s = "lost";
+                UserService.updateCount(user.getUsername(), false);
+            }
+            case 4 -> {
+                s = "even";
+                UserService.updateCount(user.getUsername(), false);
+            }
             default -> s = "error";
         }
-        msg.setText(s);
-        msg.setFont(new Font("仿宋", 20));
+        this.msg.setText(s);
+        this.msg.setFont(new Font("仿宋", 20));
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, msg,
+                new ButtonType("play again", ButtonBar.ButtonData.NO),
+                new ButtonType("exist", ButtonBar.ButtonData.YES));
+        alert.titleProperty().set("inform");
+        alert.headerTextProperty().set(msg);
+        Optional<ButtonType> buttonType = alert.showAndWait();
+        if (buttonType.isEmpty()) {
+            return;
+        }
+        if (buttonType.get().getButtonData().equals(ButtonBar.ButtonData.YES)) {
+            ClientApplication.close();
+        } else {
+            System.out.println("reset game");
+            ClientApplication.gameStage.close();
+            ClientApplication.startGame(ClientApplication.gameStage, this.s, !isCircle, true);
+        }
     }
 
     public void send() {
@@ -95,8 +126,48 @@ public class GameController {
             get();
         } catch (Exception e) {
             e.printStackTrace();
+            try {
+                handleServerError();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
 
+    }
+
+    public void handleClientError() throws Exception {
+        String response = "The against player is dropped!";
+        Alert alert = new Alert(Alert.AlertType.WARNING, response,
+                new ButtonType("exit", ButtonBar.ButtonData.NO),
+                new ButtonType("confirm", ButtonBar.ButtonData.YES));
+        alert.titleProperty().set("inform");
+        alert.headerTextProperty().set(response);
+        Optional<ButtonType> buttonType = alert.showAndWait();
+        if (buttonType.isPresent()) {
+            if (buttonType.get().getButtonData() == ButtonBar.ButtonData.YES) {
+                wait = true;
+                disable = true;
+            } else {
+                ClientApplication.close();
+            }
+        } else {
+            ClientApplication.close();
+        }
+        state = 4;
+        gameOver();
+    }
+
+    public void handleServerError() throws Exception {
+        String response = "Server is dropped!";
+        Alert alert = new Alert(Alert.AlertType.ERROR, response,
+                new ButtonType("confirm", ButtonBar.ButtonData.YES));
+        alert.titleProperty().set("inform");
+        alert.headerTextProperty().set(response);
+        alert.showAndWait();
+        wait = true;
+        disable = true;
+        state = 4;
+        gameOver();
     }
 
     public void control(int c) throws Exception {
@@ -114,10 +185,15 @@ public class GameController {
             case 8 -> onButtonClick8();
             case 9 -> onButtonClick9();
             default -> {
+                if (cnt < 3) {
+                    cnt--;
+                    return;
+                }
                 flag = c;
                 control(c / 10);
-                judge();
-                gameOver();
+                if (judge()) {
+                    gameOver();
+                }
             }
         }
     }
@@ -129,15 +205,21 @@ public class GameController {
         client.start();
         client.join();
         System.out.println(client.res);
-        wait = false;
-        this.control(client.res);
-        cnt++;
-        disable = false;
+        if (client.res == -1) {
+            handleClientError();
+        } else if (client.res == -2) {
+            handleServerError();
+        } else {
+            wait = false;
+            this.control(client.res);
+            cnt++;
+            disable = false;
+        }
     }
 
     @FXML
     protected void onButtonClick1() {
-        if (!wait && board[0][0] == 0) { 
+        if (!wait && board[0][0] == 0) {
             btn1.setFont(new Font("微软雅黑", 40));
             if (isCircleTurner) {
                 btn1.setText(CIRCLE_TURNER);
@@ -325,6 +407,9 @@ public class GameController {
     }
 
     private boolean judge() {
+        if (cnt < 3) {
+            return false;
+        }
         if (board[0][0] > 0 && board[0][0] == board[0][1] && board[0][1] == board[0][2]) {
             btn1.setTextFill(Color.rgb(84, 255, 159, 0.7));
             btn2.setTextFill(Color.rgb(84, 255, 159, 0.7));

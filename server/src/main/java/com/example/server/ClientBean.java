@@ -28,63 +28,69 @@ public class ClientBean extends Thread {
         StringBuilder users = new StringBuilder();
         view.users.values()
                 .stream()
-                .map(ClientBean::getMsg)
+                .map((k) -> k.getUser() + k.getMsg())
                 .toList()
                 .forEach(i -> users.append(i).append("\n"));
         users.append("EOF");
         out.println(users);
     }
 
-    public void changeUserState(String user, String msg) {
-        if (view.users.get(user) != null) {
-            view.users.get(user).msg = msg;
-        }
-    }
-
-    public ClientBean(String user, String msg, Socket client, boolean isFirst, Scanner in) throws IOException {
+    public ClientBean(String user, String msg, Socket client, boolean isFirst, Scanner in, PrintWriter out) throws IOException {
         this.isFirst = isFirst;
         this.user = user;
         this.msg = msg;
         this.client = client;
         clientState = 0;
         this.in = in;
+        this.out = out;
         System.out.println(in);
-        out = new PrintWriter(new OutputStreamWriter(
-                client.getOutputStream(), StandardCharsets.UTF_8), true);
-        String chess = isFirst ? "cross" : "circle";
-        out.println("Hello client,please wait patiently, you hold " + chess);
+        this.out.println("Hello client,please wait patiently");
     }
 
-    public void startGame(ClientBean against) throws IOException {
-        changeUserState(against.user, " playing with" + this.user);
-        changeUserState(this.user, " playing with" + against.user);
-        view.reLoadUserList();
-        new ServerGameThread(this.client, against.client).start();
-    }
-
-
+    @SuppressWarnings("all")
     @Override
     public void run() {
         while (true) {
             String order = in.nextLine();
             switch (order) {
                 case "get List" -> sendUserList();
+                case "prepare" -> {
+                    String user = in.nextLine();
+                    ClientBean against = view.users.get(user);
+                    against.clientState = 1;
+                    against.msg = "(prepared)";
+                    view.reLoadUserList();
+                }
                 case "start" -> {
                     String line = in.nextLine();
-                    Optional<ClientBean> first = view.users.values().stream().filter(i -> line.contains(i.user)).findFirst();
+                    Optional<ClientBean> first = view.users.values().stream()
+                            .filter(i -> i.user.equals(line) && i.clientState == 1)
+                            .findFirst();
                     if (first.isPresent()) {
-                        var against = first.get().getOut();
-                        var againstIn = first.get().getIn();
+                        var another = first.get();
+                        out.println("yes");
+                        var against = another.getOut();
+                        var againstIn = another.getIn();
                         against.println("connect");
                         against.println("Player[" + this.user + "] want to play with you.");
-
                         String res = "accept";
-                                //againstIn.nextLine();
+                        //res = againstIn.nextLine();
                         System.out.println(res);
                         against.println(res);
                         out.println(res);
+                        this.clientState = 2;
+                        this.msg = "(playing with "+another.user+")";
+                        another.clientState = 2;
+                        another.msg = "(playing with "+this.user+")";
+                        view.reLoadUserList();
+                        try {
+                            new ServerGameThread(this.client,first.get().getClient()).start();
+                            return;
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     } else {
-                        out.println("Wrong player name");
+                        out.println("Player no exists or no prepares");
                     }
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + order);

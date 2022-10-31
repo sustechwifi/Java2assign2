@@ -8,7 +8,9 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class ClientApplication extends Application {
     static Scene primaryScene;
@@ -42,21 +44,24 @@ public class ClientApplication extends Application {
         stage.show();
     }
 
-    public static void home(Stage stage, User user) throws IOException {
+    public static void home(Stage stage, User user, Scanner in, PrintWriter out, Socket s) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(ClientApplication.class.getResource("home.fxml"));
         primaryScene = new Scene(fxmlLoader.load(), 600, 450);
         stage.setTitle("Home");
         stage.setResizable(true);
         stage.setScene(primaryScene);
-        var controller = (HomeController)fxmlLoader.getController();
-        if(user != null){
+        var controller = (HomeController) fxmlLoader.getController();
+        if (user != null) {
             user = UserService.getUser(user.getUsername());
             controller.user = user;
-            controller.info.setText("username : "+user.getUsername() +
-                                    "\ntotal win : "+user.getWin_count() +
-                                    " | total game : "+user.getCount()
+            controller.in = in;
+            controller.out = out;
+            controller.s = s;
+            controller.info.setText("username : " + user.getUsername() +
+                    "\ntotal win : " + user.getWin_count() +
+                    " | total game : " + user.getCount()
             );
-            controller.info.setFont(new Font("仿宋",15));
+            controller.info.setFont(new Font("仿宋", 15));
             System.out.println(user);
         }
         gameStage = stage;
@@ -64,23 +69,23 @@ public class ClientApplication extends Application {
     }
 
 
-    public static void startGame(Stage stage, Socket s, boolean isFirst) throws Exception {
+    public static void startGame(Stage stage, Socket s, boolean isFirst, boolean reGame) throws Exception {
         gameStage = stage;
         FXMLLoader fxmlLoader = new FXMLLoader(ClientApplication.class.getResource("client.fxml"));
         primaryScene = new Scene(fxmlLoader.load(), 800, 600);
-        stage.setTitle("Client "+(isFirst ? "X" : "O"));
+        stage.setTitle("Client " + (isFirst ? "X" : "O"));
         stage.setResizable(true);
         stage.setScene(primaryScene);
-        var controller = (GameController)fxmlLoader.getController();
+        var controller = (GameController) fxmlLoader.getController();
         controller.s = s;
         controller.isCircle = !isFirst;
         stage.show();
-        if (!isFirst){
+        if (!isFirst) {
             controller.get();
         }
     }
 
-    public static void close(){
+    public static void close() {
         Platform.exit();
     }
 

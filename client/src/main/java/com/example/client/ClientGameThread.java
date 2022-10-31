@@ -1,10 +1,15 @@
 package com.example.client;
 
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class ClientGameThread extends Thread {
@@ -25,17 +30,25 @@ public class ClientGameThread extends Thread {
                 s.getOutputStream(), StandardCharsets.UTF_8), true);
     }
 
-    public void send() {
+    public void send() throws IOException{
         System.out.println("send " + pos + " to server");
         out.println(pos);
+        out.println("EOF");
     }
 
-    public void get() throws Exception {
-        String result = in.nextLine();
-        if (result != null) {
-            res = Integer.parseInt(result);
+    public void get() {
+        try {
+            String result, tmp = null;
+            while (!"EOF".equals(result = in.nextLine())) {
+                tmp = result;
+            }
+            res = Integer.parseInt(tmp);
+            System.out.println("get " + res + " from server");
+        } catch (NumberFormatException e) {
+            res = -1;
+        } catch (Exception e) {
+            res = -2;
         }
-        System.out.println("get " + res + " from server");
     }
 
     @Override

@@ -29,6 +29,24 @@ public class UserService {
         }
     }
 
+    public static boolean updateCount(String username, boolean isWin) {
+        Connection connection = JdbcUtil.connection;
+        String sql1 = "update game.public.user set count = count + 1 where username = ?";
+        String sql2 = "update game.public.user set count = count + 1,win_count = win_count + 1 where username = ?";
+        try {
+            if (!checkName(username)) {
+                System.out.println("wrong username");
+                return false;
+            }
+            PreparedStatement preparedStatement = connection.prepareStatement(isWin ? sql2 : sql1);
+            preparedStatement.setString(1, username);
+            preparedStatement.executeUpdate();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     public static boolean checkName(String username) {
         Connection connection = JdbcUtil.connection;

@@ -1,25 +1,17 @@
 package com.example.client;
 
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.TilePane;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.stage.Stage;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Objects;
+import java.net.Socket;
 import java.util.Optional;
 import java.util.Scanner;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class HomeController {
     public User user;
@@ -36,14 +28,14 @@ public class HomeController {
     @FXML
     Button getList;
 
-    @FXML
-    Button connect;
+    public Socket s;
+    public Scanner in;
+    public PrintWriter out;
 
     @FXML
     Text info;
 
-    @FXML
-    TextField ip;
+
 
     @FXML
     TextArea list;
@@ -58,32 +50,13 @@ public class HomeController {
     Button setPrepared;
 
     private boolean isFirst;
-    private Socket s;
-    private Scanner in;
-    private PrintWriter out;
+
+
 
     @FXML
-    void connect() throws IOException {
-        String address = ip.getText();
-        s = new Socket();
-        s.connect(new InetSocketAddress(address, 18080));
-        in = new Scanner(s.getInputStream(), StandardCharsets.UTF_8);
-        out = new PrintWriter(new OutputStreamWriter(
-                s.getOutputStream(), StandardCharsets.UTF_8), true);
-        out.println(InetAddress.getLocalHost());
-        out.println(user == null ? "xxx" : user.getUsername());
-        Runnable r = () -> {
-            try {
-                String msg = in.nextLine();
-                System.out.println(msg);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        };
-        executorService.submit(r);
-    }
-
     public void prepare() throws Exception {
+        out.println("prepare");
+        out.println(this.user.getUsername());
         String msg = in.nextLine();
         System.out.println(msg);
         if ("connect".equals(msg)) {
@@ -100,7 +73,8 @@ public class HomeController {
                 out.println("accept");
                 res = in.nextLine();
                 System.out.println("game start");
-                //startGame();
+                isFirst = false;
+                startGame();
             }else {
                 out.println("reject");
                 res = "You have rejected";
@@ -110,15 +84,26 @@ public class HomeController {
     }
 
     @FXML
-    void chooseOne(){
+    void chooseOne() throws Exception {
         String against = selectUser.getText();
         StringBuilder msg = new StringBuilder();
         msg.append("start\n").append(against);
         out.println(msg);
-        String res = in.nextLine();
-        System.out.println(res);
-        System.out.println("game start");
-        //startGame();
+        String response = in.nextLine();
+        if ("yes".equals(response)){
+            String res = in.nextLine();
+            System.out.println(res);
+            System.out.println("game start");
+            isFirst = true;
+            startGame();
+        }else{
+            Alert alert = new Alert(Alert.AlertType.ERROR,response,
+                    new ButtonType("accept", ButtonBar.ButtonData.YES));
+            alert.titleProperty().set("inform");
+            alert.headerTextProperty().set(response);
+            alert.showAndWait();
+        }
+
 
     }
 
@@ -145,7 +130,7 @@ public class HomeController {
     void startGame() throws Exception {
         var stage = ClientApplication.gameStage;
         stage.close();
-        ClientApplication.startGame(stage, s, isFirst);
+        ClientApplication.startGame(stage, s, isFirst, false);
         System.out.println("isFirst = " + isFirst);
         System.out.println("server address:" + s);
     }

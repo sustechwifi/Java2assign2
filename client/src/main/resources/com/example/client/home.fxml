@@ -19,6 +19,7 @@
     </padding>
 
     <Text fx:id="info"/>
+
     <VBox alignment="CENTER">
         <HBox>
             <Button fx:id="getList" text="get UserList" onAction="#getUserList"/>
@@ -33,11 +34,6 @@
         </HBox>
 
     </VBox>
-
-    <HBox alignment="CENTER">
-        <TextField fx:id="ip" text="localhost"/>
-        <Button fx:id="connect" text="confirm" onAction="#connect"/>
-    </HBox>
 
     <HBox alignment="CENTER">
         <Button fx:id="start" text="start" onAction="#startGame"/>

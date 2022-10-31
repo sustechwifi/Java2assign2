@@ -40,14 +40,19 @@ public class ServerApplication extends Application {
                     Socket incoming = serverSocket.accept();
                     System.out.println("client address:" + incoming);
                     var in = new Scanner(incoming.getInputStream(), StandardCharsets.UTF_8);
+                    var out = new PrintWriter(new OutputStreamWriter(
+                            incoming.getOutputStream(), StandardCharsets.UTF_8), true);
                     String clientAddress = in.nextLine();
                     String user = in.nextLine();
                     System.out.println(clientAddress);
+                    String response = "yes";
+                    if (view.users.containsKey(user)){
+                        response = "no";
+                    }
+                    out.println(response);
                     onlineCount++;
-                    String msg = user +
-                            (onlineCount % 2 == 0 ? " | cross | " : " | circle | ")
-                            + "(waiting)";
-                    var newUser = new ClientBean(user, msg, incoming, onlineCount % 2 == 0,in);
+                    String msg = "(waiting)";
+                    var newUser = new ClientBean(user, msg, incoming, onlineCount % 2 == 0,in,out);
                     view.users.put(user, newUser);
                     view.reLoadUserList();
                     executorService.submit(newUser);

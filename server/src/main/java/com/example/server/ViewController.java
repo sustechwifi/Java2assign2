@@ -26,7 +26,7 @@ public class ViewController {
         StringBuilder sb = new StringBuilder();
         for (String user : users.keySet()) {
             ClientBean u = users.get(user);
-            sb.append(u.getMsg()).append(" \n");
+            sb.append(u.getUser()).append(u.getMsg()).append(" \n");
         }
         list.setText(sb.toString());
     }
