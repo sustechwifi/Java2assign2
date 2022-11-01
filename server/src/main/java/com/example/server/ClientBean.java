@@ -93,6 +93,14 @@ public class ClientBean extends Thread {
                         out.println("Player no exists or no prepares");
                     }
                 }
+                case "logout" ->{
+                    String line = in.nextLine();
+                    Optional<ClientBean> first = view.users.values().stream()
+                            .filter(i -> i.user.equals(line))
+                            .findFirst();
+                    view.users.remove(first.get());
+                    out.println("finished");
+                }
                 default -> throw new IllegalStateException("Unexpected value: " + order);
             }
         }

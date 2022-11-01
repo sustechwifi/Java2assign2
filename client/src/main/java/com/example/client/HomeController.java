@@ -4,8 +4,10 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
 
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -27,6 +29,9 @@ public class HomeController {
 
     @FXML
     Button getList;
+
+    @FXML
+    Button logout;
 
     public Socket s;
     public Scanner in;
@@ -103,8 +108,18 @@ public class HomeController {
             alert.headerTextProperty().set(response);
             alert.showAndWait();
         }
+    }
 
-
+    @FXML
+    void logout(){
+        if (s != null) {
+            out.println("logout");
+            out.println(this.user.getUsername());
+            String s = in.nextLine();
+            System.out.println(s);
+            ClientApplication.close();
+            System.exit(0);
+        }
     }
 
     @FXML
@@ -130,7 +145,7 @@ public class HomeController {
     void startGame() throws Exception {
         var stage = ClientApplication.gameStage;
         stage.close();
-        ClientApplication.startGame(stage, s, isFirst, false);
+        ClientApplication.startGame(stage, s, isFirst,this.user,in,out);
         System.out.println("isFirst = " + isFirst);
         System.out.println("server address:" + s);
     }

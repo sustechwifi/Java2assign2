@@ -1,5 +1,7 @@
 package com.example.client;
 
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -8,11 +10,16 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.stage.Stage;
 
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 
 public class GameController {
@@ -20,6 +27,13 @@ public class GameController {
     private static final String CIRCLE_TURNER = "O";
     private static final String CROSS_TURNER = "X";
     public final Object lock = new Object();
+
+    ExecutorService executorService = new ThreadPoolExecutor(
+            2,
+            2,
+            0, TimeUnit.SECONDS,
+            new ArrayBlockingQueue<>(512),
+            new ThreadPoolExecutor.DiscardPolicy());
 
     // 0 no start; 1 playing; 2 win; 3 lost; 4 even
 
@@ -30,6 +44,10 @@ public class GameController {
     public boolean disable = false;
     public boolean wait = false;
     public User user;
+
+    public Scanner in;
+    public PrintWriter out;
+
     @FXML
     private Text msg;
 
@@ -62,7 +80,6 @@ public class GameController {
 
     int curr = 0;
     int cnt = 0;
-    int flag = 0;
 
     int[][] board = new int[3][3];
 
@@ -71,12 +88,6 @@ public class GameController {
     }
 
     private void gameOver() throws Exception {
-        ClientGameThread client = new ClientGameThread(flag, false, s, this);
-        client.start();
-        client.join();
-        System.out.println("game over");
-        System.out.println("isCircle:" + isCircle);
-        System.out.println(Arrays.deepToString(board));
         String s;
         String msg = "Game over";
         switch (state) {
@@ -96,6 +107,7 @@ public class GameController {
         }
         this.msg.setText(s);
         this.msg.setFont(new Font("仿宋", 20));
+        sendOver(s);
         Alert alert = new Alert(Alert.AlertType.INFORMATION, msg,
                 new ButtonType("play again", ButtonBar.ButtonData.NO),
                 new ButtonType("exist", ButtonBar.ButtonData.YES));
@@ -107,23 +119,28 @@ public class GameController {
         }
         if (buttonType.get().getButtonData().equals(ButtonBar.ButtonData.YES)) {
             ClientApplication.close();
+            System.exit(0);
         } else {
-            System.out.println("reset game");
             ClientApplication.gameStage.close();
-            ClientApplication.startGame(ClientApplication.gameStage, this.s, !isCircle, true);
+            ClientGameThread t = new ClientGameThread(5, "back", in, out);
+            t.start();
+            t.join();
+            ClientApplication.startGame(ClientApplication.gameStage, this.s, !isCircle, this.user, this.in, this.out);
         }
     }
 
     public void send() {
         try {
-            if (judge()) {
-                curr *= 10;
-            }
-            ClientGameThread client = new ClientGameThread(curr, false, s, this);
+            ClientGameThread client = new ClientGameThread(curr, 2, in, out);
             client.start();
             client.join();
             cnt++;
-            get();
+            if (judge()) {
+                gameOver();
+            } else {
+                System.out.println("waiting...");
+                get();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             try {
@@ -170,11 +187,17 @@ public class GameController {
         gameOver();
     }
 
-    public void control(int c) throws Exception {
+    private void sendOver(String s) throws Exception {
+        ClientGameThread client = new ClientGameThread(3, s, in, out);
+        client.start();
+        client.join();
+        System.out.println("game over");
+        System.out.println("isCircle:" + isCircle);
+        System.out.println(Arrays.deepToString(board));
+    }
+
+    private void control(int c) {
         switch (c) {
-            case 0 -> {
-                return;
-            }
             case 1 -> onButtonClick1();
             case 2 -> onButtonClick2();
             case 3 -> onButtonClick3();
@@ -184,16 +207,22 @@ public class GameController {
             case 7 -> onButtonClick7();
             case 8 -> onButtonClick8();
             case 9 -> onButtonClick9();
+            default -> throw new IllegalStateException("Unexpected value: " + c);
+        }
+    }
+
+    private void handle(int response) throws Exception {
+        switch (response) {
+            case -1 -> handleClientError();
+            case -2 -> handleServerError();
+            case -3 -> {
+                gameOver();
+            }
             default -> {
-                if (cnt < 3) {
-                    cnt--;
-                    return;
-                }
-                flag = c;
-                control(c / 10);
-                if (judge()) {
-                    gameOver();
-                }
+                wait = false;
+                this.control(response);
+                cnt++;
+                disable = false;
             }
         }
     }
@@ -201,24 +230,30 @@ public class GameController {
     public void get() throws Exception {
         wait = true;
         disable = true;
-        ClientGameThread client = new ClientGameThread(0, true, s, this);
+        ClientGameThread client = new ClientGameThread(0, 1, in, out);
         client.start();
         client.join();
         System.out.println(client.res);
-        if (client.res == -1) {
-            handleClientError();
-        } else if (client.res == -2) {
-            handleServerError();
-        } else {
-            wait = false;
-            this.control(client.res);
-            cnt++;
-            disable = false;
+        handle(client.res);
+        if (judge()) {
+            gameOver();
         }
+    }
+
+    private void paintBoard(Runnable func) {
+        Task<Void> task = new Task<>() {
+            @Override
+            public Void call() {
+                Platform.runLater(func);
+                return null;
+            }
+        };
+        executorService.submit(task);
     }
 
     @FXML
     protected void onButtonClick1() {
+        curr = 1;
         if (!wait && board[0][0] == 0) {
             btn1.setFont(new Font("微软雅黑", 40));
             if (isCircleTurner) {
@@ -231,15 +266,16 @@ public class GameController {
             isCircleTurner = !isCircleTurner;
             btn1.setDisable(true);
             System.out.println(1);
-            curr = 1;
             if (!disable) {
-                send();
+                paintBoard(this::send);
             }
         }
     }
 
     @FXML
     protected void onButtonClick2() {
+        curr = 2;
+
         if (!wait && board[0][1] == 0) {
             btn2.setFont(new Font("微软雅黑", 40));
             if (isCircleTurner) {
@@ -252,15 +288,17 @@ public class GameController {
             isCircleTurner = !isCircleTurner;
             btn2.setDisable(true);
             System.out.println(2);
-            curr = 2;
-            if (!disable) {
-                send();
-            }
+        }
+
+        if (!disable) {
+            send();
         }
     }
 
     @FXML
     protected void onButtonClick3() {
+        curr = 3;
+
         if (!wait && board[0][2] == 0) {
             btn3.setFont(new Font("微软雅黑", 40));
             if (isCircleTurner) {
@@ -273,15 +311,17 @@ public class GameController {
             isCircleTurner = !isCircleTurner;
             btn3.setDisable(true);
             System.out.println(3);
-            curr = 3;
-            if (!disable) {
-                send();
-            }
+        }
+
+        if (!disable) {
+            send();
         }
     }
 
     @FXML
     protected void onButtonClick4() {
+        curr = 4;
+
         if (!wait && board[1][0] == 0) {
             btn4.setFont(new Font("微软雅黑", 40));
             if (isCircleTurner) {
@@ -294,15 +334,17 @@ public class GameController {
             isCircleTurner = !isCircleTurner;
             btn4.setDisable(true);
             System.out.println(4);
-            curr = 4;
-            if (!disable) {
-                send();
-            }
+        }
+
+        if (!disable) {
+            send();
         }
     }
 
     @FXML
     protected void onButtonClick5() {
+        curr = 5;
+
         if (!wait && board[1][1] == 0) {
             btn5.setFont(new Font("微软雅黑", 40));
             if (isCircleTurner) {
@@ -315,15 +357,17 @@ public class GameController {
             isCircleTurner = !isCircleTurner;
             btn5.setDisable(true);
             System.out.println(5);
-            curr = 5;
-            if (!disable) {
-                send();
-            }
+        }
+
+        if (!disable) {
+            send();
         }
     }
 
     @FXML
     protected void onButtonClick6() {
+        curr = 6;
+
         if (!wait && board[1][2] == 0) {
             btn6.setFont(new Font("微软雅黑", 40));
             if (isCircleTurner) {
@@ -336,15 +380,17 @@ public class GameController {
             isCircleTurner = !isCircleTurner;
             btn6.setDisable(true);
             System.out.println(6);
-            curr = 6;
-            if (!disable) {
-                send();
-            }
+        }
+
+        if (!disable) {
+            send();
         }
     }
 
     @FXML
     protected void onButtonClick7() {
+        curr = 7;
+
         if (!wait && board[2][0] == 0) {
             btn7.setFont(new Font("微软雅黑", 40));
             if (isCircleTurner) {
@@ -357,15 +403,17 @@ public class GameController {
             isCircleTurner = !isCircleTurner;
             btn7.setDisable(true);
             System.out.println(7);
-            curr = 7;
-            if (!disable) {
-                send();
-            }
+        }
+
+        if (!disable) {
+            send();
         }
     }
 
     @FXML
     protected void onButtonClick8() {
+        curr = 8;
+
         if (!wait && board[2][1] == 0) {
             btn8.setFont(new Font("微软雅黑", 40));
             if (isCircleTurner) {
@@ -378,15 +426,17 @@ public class GameController {
             isCircleTurner = !isCircleTurner;
             btn8.setDisable(true);
             System.out.println(8);
-            curr = 8;
-            if (!disable) {
-                send();
-            }
+        }
+
+        if (!disable) {
+            send();
         }
     }
 
     @FXML
     protected void onButtonClick9() {
+        curr = 9;
+
         if (!wait && board[2][2] == 0) {
             btn9.setFont(new Font("微软雅黑", 40));
             if (isCircleTurner) {
@@ -399,10 +449,10 @@ public class GameController {
             isCircleTurner = !isCircleTurner;
             btn9.setDisable(true);
             System.out.println(9);
-            curr = 9;
-            if (!disable) {
-                send();
-            }
+        }
+
+        if (!disable) {
+            send();
         }
     }
 

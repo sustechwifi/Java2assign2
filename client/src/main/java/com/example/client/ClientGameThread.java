@@ -13,32 +13,53 @@ import java.util.Optional;
 import java.util.Scanner;
 
 public class ClientGameThread extends Thread {
-    private final int pos;
-    private final boolean type;
+    private int pos;
+    private final int type;
     public int res;
-    private GameController controller;
     final Scanner in;
     final PrintWriter out;
+    private String msg;
 
-    public ClientGameThread(int pos, boolean state, Socket s, GameController gameController) throws IOException {
+    public ClientGameThread(int pos, int state, Scanner in,PrintWriter out) throws IOException {
         this.type = state;
-        this.controller = gameController;
-        System.out.println("server address:" + s);
         this.pos = pos;
-        in = new Scanner(s.getInputStream(), StandardCharsets.UTF_8);
-        out = new PrintWriter(new OutputStreamWriter(
-                s.getOutputStream(), StandardCharsets.UTF_8), true);
+        this.in = in;
+        this.out = out;
     }
 
-    public void send() throws IOException{
+    public ClientGameThread(int state,String msg,Scanner in,PrintWriter out) throws IOException {
+        this.type = state;
+        this.msg = msg;
+        this.in = in;
+        this.out = out;
+    }
+
+    public void send() {
         System.out.println("send " + pos + " to server");
+        out.println("playing");
         out.println(pos);
         out.println("EOF");
+    }
+
+    public void over(){
+        out.println("over");
+        out.println(msg);
+    }
+
+    public void exit(){
+
+    }
+
+    public void back(){
+        System.out.println("get back");
+        out.println("remake");
+        out.println(msg);
     }
 
     public void get() {
         try {
             String result, tmp = null;
+            System.out.println(in);
             while (!"EOF".equals(result = in.nextLine())) {
                 tmp = result;
             }
@@ -54,10 +75,12 @@ public class ClientGameThread extends Thread {
     @Override
     public void run() {
         try {
-            if (type) {
-                get();
-            } else {
-                send();
+            switch (this.type){
+                case 1 -> get();
+                case 2 -> send();
+                case 3 -> over();
+                case 4 -> exit();
+                case 5 -> back();
             }
         } catch (Exception e) {
             e.printStackTrace();

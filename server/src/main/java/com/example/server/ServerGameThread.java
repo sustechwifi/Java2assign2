@@ -31,44 +31,69 @@ public class ServerGameThread extends Thread {
                 client2.getOutputStream(), StandardCharsets.UTF_8), true);
     }
 
+    @SuppressWarnings("all")
     @Override
     public void run() {
         System.out.println("client1 address:" + client1);
         System.out.println("client2 address:" + client2);
         String meg1, meg2;
         while (true) {
-            try {
-                while(!"EOF".equals(meg1 = in1.nextLine())){
-                    System.out.println(meg1);
-                    out2.println(meg1);
+            switch (in1.nextLine()) {
+                case "playing" -> {
+                    System.out.println("===== turn ====");
+                    try {
+                        while (!"EOF".equals(meg1 = in1.nextLine())) {
+                            System.out.println(meg1);
+                            out2.println(meg1);
+                        }
+                        out2.println(meg1);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        out2.println("ERROR\nClient dropped\nEOF");
+                        String response = "Client 1 (hold cross) is dropped!.";
+                        Alert alert = new Alert(Alert.AlertType.ERROR, response,
+                                new ButtonType("accept", ButtonBar.ButtonData.YES));
+                        alert.titleProperty().set("inform");
+                        alert.headerTextProperty().set(response);
+                        alert.showAndWait();
+                    }
                 }
-                out2.println(meg1);
-            } catch (Exception e) {
-                e.printStackTrace();
-                out2.println("ERROR\nClient dropped\nEOF");
-                String response = "Client 1 (hold cross) is dropped!.";
-                Alert alert = new Alert(Alert.AlertType.ERROR,response,
-                        new ButtonType("accept", ButtonBar.ButtonData.YES));
-                alert.titleProperty().set("inform");
-                alert.headerTextProperty().set(response);
-                alert.showAndWait();
+                case "over" -> {
+                    String line = in1.nextLine();
+                    System.out.println("[game over]"+line);
+                }
+                case "remake" -> {
+                    String line = in1.nextLine();
+                    System.out.println("[remake]"+line);
+                }
+                case "exit" -> {
+                    String line = in1.nextLine();
+                }
+                default -> throw new IllegalStateException("Unexpected value: ");
             }
-            try {
-                while(!"EOF".equals(meg2 = in2.nextLine())){
-                    System.out.println(meg2);
-                    out1.println(meg2);
+
+            switch (in2.nextLine()) {
+                case "playing" -> {
+                    try {
+                        while (!"EOF".equals(meg2 = in2.nextLine())) {
+                            System.out.println(meg2);
+                            out1.println(meg2);
+                        }
+                        out1.println(meg2);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        out1.println("ERROR\nClient dropped\nEOF");
+                        e.printStackTrace();
+                        String response = "Client 2 (hold circle) is dropped!.";
+                        Alert alert = new Alert(Alert.AlertType.ERROR, response,
+                                new ButtonType("accept", ButtonBar.ButtonData.YES));
+                        alert.titleProperty().set("inform");
+                        alert.headerTextProperty().set(response);
+                        alert.showAndWait();
+                    }
                 }
-                out1.println(meg2);
-            } catch (Exception e) {
-                e.printStackTrace();
-                out1.println("ERROR\nClient dropped\nEOF");
-                e.printStackTrace();
-                String response = "Client 2 (hold circle) is dropped!.";
-                Alert alert = new Alert(Alert.AlertType.ERROR,response,
-                        new ButtonType("accept", ButtonBar.ButtonData.YES));
-                alert.titleProperty().set("inform");
-                alert.headerTextProperty().set(response);
-                alert.showAndWait();
+
+                default -> throw new IllegalStateException("Unexpected value: ");
             }
         }
     }

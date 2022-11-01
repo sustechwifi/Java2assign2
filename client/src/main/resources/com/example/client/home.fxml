@@ -24,6 +24,7 @@
         <HBox>
             <Button fx:id="getList" text="get UserList" onAction="#getUserList"/>
             <Button fx:id="setPrepared" text="prepare" onAction="#prepare"/>
+            <Button fx:id="logout" text="logout" onAction="#logout"/>
         </HBox>
 
         <Text text="UserList"/>

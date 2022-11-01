@@ -34,7 +34,7 @@ public class UserService {
         String sql1 = "update game.public.user set count = count + 1 where username = ?";
         String sql2 = "update game.public.user set count = count + 1,win_count = win_count + 1 where username = ?";
         try {
-            if (!checkName(username)) {
+            if (checkName(username)) {
                 System.out.println("wrong username");
                 return false;
             }

@@ -69,7 +69,7 @@ public class ClientApplication extends Application {
     }
 
 
-    public static void startGame(Stage stage, Socket s, boolean isFirst, boolean reGame) throws Exception {
+    public static void startGame(Stage stage, Socket s, boolean isFirst, User user,Scanner in,PrintWriter out) throws Exception {
         gameStage = stage;
         FXMLLoader fxmlLoader = new FXMLLoader(ClientApplication.class.getResource("client.fxml"));
         primaryScene = new Scene(fxmlLoader.load(), 800, 600);
@@ -77,7 +77,11 @@ public class ClientApplication extends Application {
         stage.setResizable(true);
         stage.setScene(primaryScene);
         var controller = (GameController) fxmlLoader.getController();
+        System.out.println(s);
         controller.s = s;
+        controller.in = in;
+        controller.out = out;
+        controller.user = user;
         controller.isCircle = !isFirst;
         stage.show();
         if (!isFirst) {
