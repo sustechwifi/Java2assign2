@@ -2,10 +2,12 @@ package com.example.client;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -32,6 +34,10 @@ public class ClientApplication extends Application {
         stage.setScene(primaryScene);
         gameStage = stage;
         stage.show();
+        stage.setOnCloseRequest(event -> {
+            System.out.print("监听到窗口关闭");
+            close();
+        });
     }
 
     public static void register(Stage stage) throws IOException {
@@ -42,6 +48,10 @@ public class ClientApplication extends Application {
         stage.setScene(primaryScene);
         gameStage = stage;
         stage.show();
+        stage.setOnCloseRequest(event -> {
+            System.out.print("监听到窗口关闭");
+            close();
+        });
     }
 
     public static void home(Stage stage, User user, Scanner in, PrintWriter out, Socket s) throws IOException {
@@ -66,6 +76,10 @@ public class ClientApplication extends Application {
         }
         gameStage = stage;
         stage.show();
+        stage.setOnCloseRequest(event -> {
+            System.out.print("监听到窗口关闭");
+            close();
+        });
     }
 
 
@@ -86,11 +100,18 @@ public class ClientApplication extends Application {
         stage.show();
         if (!isFirst) {
             controller.get();
+        }else {
+            controller.init();
         }
+        stage.setOnCloseRequest(event -> {
+            System.out.print("监听到窗口关闭");
+            close();
+        });
     }
 
     public static void close() {
         Platform.exit();
+        System.exit(0);
     }
 
     public static void main(String[] args) {

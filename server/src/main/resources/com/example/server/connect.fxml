@@ -13,7 +13,11 @@
     </padding>
 
     <Label fx:id="welcomeText" text="Users list"/>
-    <Button fx:id="btn" onAction="#getIp" text="Get server Ip"/>
+    <VBox alignment="CENTER">
+        <Button fx:id="btn" onAction="#getIp" text="Get server Ip"/>
+        <Button fx:id="refresh" onAction="#reLoadUserList" text="refresh client"/>
+    </VBox>
+
     <TextArea fx:id="list"/>
 
 </VBox>

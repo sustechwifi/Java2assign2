@@ -3,6 +3,7 @@ package com.example.client;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -109,7 +110,6 @@ public class GameController {
         this.msg.setFont(new Font("仿宋", 20));
         sendOver(s);
         Alert alert = new Alert(Alert.AlertType.INFORMATION, msg,
-                new ButtonType("play again", ButtonBar.ButtonData.NO),
                 new ButtonType("exist", ButtonBar.ButtonData.YES));
         alert.titleProperty().set("inform");
         alert.headerTextProperty().set(msg);
@@ -118,14 +118,11 @@ public class GameController {
             return;
         }
         if (buttonType.get().getButtonData().equals(ButtonBar.ButtonData.YES)) {
-            ClientApplication.close();
-            System.exit(0);
-        } else {
             ClientApplication.gameStage.close();
-            ClientGameThread t = new ClientGameThread(5, "back", in, out);
+            ClientGameThread t = new ClientGameThread(4, this.user.getUsername(), in, out);
             t.start();
             t.join();
-            ClientApplication.startGame(ClientApplication.gameStage, this.s, !isCircle, this.user, this.in, this.out);
+            ClientApplication.close();
         }
     }
 
@@ -135,11 +132,10 @@ public class GameController {
             client.start();
             client.join();
             cnt++;
+            wait = true;
+            disable = true;
             if (judge()) {
                 gameOver();
-            } else {
-                System.out.println("waiting...");
-                get();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -174,17 +170,14 @@ public class GameController {
         gameOver();
     }
 
-    public void handleServerError() throws Exception {
+    public void handleServerError() {
         String response = "Server is dropped!";
         Alert alert = new Alert(Alert.AlertType.ERROR, response,
                 new ButtonType("confirm", ButtonBar.ButtonData.YES));
         alert.titleProperty().set("inform");
         alert.headerTextProperty().set(response);
         alert.showAndWait();
-        wait = true;
-        disable = true;
-        state = 4;
-        gameOver();
+        ClientApplication.close();
     }
 
     private void sendOver(String s) throws Exception {
@@ -220,6 +213,7 @@ public class GameController {
             }
             default -> {
                 wait = false;
+                disable = true;
                 this.control(response);
                 cnt++;
                 disable = false;
@@ -227,28 +221,37 @@ public class GameController {
         }
     }
 
-    public void get() throws Exception {
-        wait = true;
-        disable = true;
-        ClientGameThread client = new ClientGameThread(0, 1, in, out);
-        client.start();
-        client.join();
-        System.out.println(client.res);
-        handle(client.res);
-        if (judge()) {
-            gameOver();
-        }
-    }
-
-    private void paintBoard(Runnable func) {
+    public void init() {
         Task<Void> task = new Task<>() {
             @Override
-            public Void call() {
-                Platform.runLater(func);
-                return null;
+            public Void call() throws Exception {
+                while (true) {
+                    ClientGameThread client = new ClientGameThread(0, 1, in, out);
+                    client.start();
+                    client.join();
+                    Platform.runLater(() -> {
+                        try {
+                            handle(client.res);
+                            System.out.println(client.res);
+                            if (judge()) {
+                                gameOver();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                }
             }
         };
         executorService.submit(task);
+    }
+
+    public void get() throws Exception {
+        ClientGameThread client = new ClientGameThread(0, 1, in, out);
+        client.start();
+        client.join();
+        handle(client.res);
+        init();
     }
 
     @FXML
@@ -267,7 +270,7 @@ public class GameController {
             btn1.setDisable(true);
             System.out.println(1);
             if (!disable) {
-                paintBoard(this::send);
+                send();
             }
         }
     }

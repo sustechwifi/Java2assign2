@@ -1,15 +1,6 @@
 package com.example.client;
 
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
-
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 import java.util.Scanner;
 
 public class ClientGameThread extends Thread {
@@ -20,14 +11,14 @@ public class ClientGameThread extends Thread {
     final PrintWriter out;
     private String msg;
 
-    public ClientGameThread(int pos, int state, Scanner in,PrintWriter out) throws IOException {
+    public ClientGameThread(int pos, int state, Scanner in,PrintWriter out) {
         this.type = state;
         this.pos = pos;
         this.in = in;
         this.out = out;
     }
 
-    public ClientGameThread(int state,String msg,Scanner in,PrintWriter out) throws IOException {
+    public ClientGameThread(int state,String msg,Scanner in,PrintWriter out) {
         this.type = state;
         this.msg = msg;
         this.in = in;
@@ -47,7 +38,11 @@ public class ClientGameThread extends Thread {
     }
 
     public void exit(){
-
+        System.out.println("exit");
+        out.println("exit");
+        out.println(msg);
+        var s = in.nextLine();
+        System.out.println(s);
     }
 
     public void back(){

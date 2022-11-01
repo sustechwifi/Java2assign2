@@ -9,7 +9,10 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.Scanner;
+
+import static com.example.server.ServerApplication.view;
 
 public class ServerGameThread extends Thread {
     private Socket client1;
@@ -38,7 +41,8 @@ public class ServerGameThread extends Thread {
         System.out.println("client2 address:" + client2);
         String meg1, meg2;
         while (true) {
-            switch (in1.nextLine()) {
+            meg1 = in1.nextLine();
+            switch (meg1) {
                 case "playing" -> {
                     System.out.println("===== turn ====");
                     try {
@@ -60,19 +64,22 @@ public class ServerGameThread extends Thread {
                 }
                 case "over" -> {
                     String line = in1.nextLine();
-                    System.out.println("[game over]"+line);
+                    System.out.println("[game over]" + line);
                 }
                 case "remake" -> {
                     String line = in1.nextLine();
-                    System.out.println("[remake]"+line);
+                    System.out.println("[remake]" + line);
                 }
                 case "exit" -> {
                     String line = in1.nextLine();
+                    view.users.remove(line);
+                    view.reLoadUserList();
+                    out1.println("copy that");
                 }
-                default -> throw new IllegalStateException("Unexpected value: ");
+                default -> throw new IllegalStateException("Unexpected value: " + meg1);
             }
-
-            switch (in2.nextLine()) {
+            meg2 = in2.nextLine();
+            switch (meg2) {
                 case "playing" -> {
                     try {
                         while (!"EOF".equals(meg2 = in2.nextLine())) {
@@ -92,8 +99,21 @@ public class ServerGameThread extends Thread {
                         alert.showAndWait();
                     }
                 }
-
-                default -> throw new IllegalStateException("Unexpected value: ");
+                case "over" -> {
+                    String line = in2.nextLine();
+                    System.out.println("[game over]" + line);
+                }
+                case "remake" -> {
+                    String line = in2.nextLine();
+                    System.out.println("[remake]" + line);
+                }
+                case "exit" -> {
+                    String line = in2.nextLine();
+                    view.users.remove(line);
+                    view.reLoadUserList();
+                    out2.println("copy that");
+                }
+                default -> throw new IllegalStateException("Unexpected value: " + meg2);
             }
         }
     }

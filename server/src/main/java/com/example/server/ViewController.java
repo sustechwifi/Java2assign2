@@ -16,12 +16,16 @@ public class ViewController {
     @FXML
     private Button btn;
 
+    @FXML
+    private Button refresh;
+
     public Map<String,ClientBean> users = new HashMap<>();
 
 
     @FXML
     private TextArea list;
 
+    @FXML
     public void reLoadUserList(){
         StringBuilder sb = new StringBuilder();
         for (String user : users.keySet()) {
@@ -31,6 +35,7 @@ public class ViewController {
         list.setText(sb.toString());
     }
 
+    @FXML
     public void getIp() throws UnknownHostException {
         welcomeText.setText(String.valueOf(Inet4Address.getLocalHost()));
     }
