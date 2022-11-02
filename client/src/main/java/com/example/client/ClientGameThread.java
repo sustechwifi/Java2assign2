@@ -41,8 +41,11 @@ public class ClientGameThread extends Thread {
         System.out.println("exit");
         out.println("exit");
         out.println(msg);
-        var s = in.nextLine();
-        System.out.println(s);
+        try {
+            var s = in.nextLine();
+            System.out.println(s);
+        } catch (Exception ignored) {
+        }
     }
 
     public void back(){

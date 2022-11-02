@@ -90,7 +90,6 @@ public class LoginController {
             alert.titleProperty().set("inform");
             alert.headerTextProperty().set(msg);
             alert.showAndWait();
-            e.printStackTrace();
             return false;
         }
         out.println(user.getUsername());

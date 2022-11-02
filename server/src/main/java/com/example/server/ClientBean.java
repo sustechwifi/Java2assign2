@@ -84,7 +84,7 @@ public class ClientBean extends Thread {
                         another.msg = "(playing with "+this.user+")";
                         view.reLoadUserList();
                         try {
-                            new ServerGameThread(this.client,first.get().getClient()).start();
+                            new ServerGameThread(this.client,this.user,another.client,another.user).start();
                             return;
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -132,5 +132,13 @@ public class ClientBean extends Thread {
 
     public boolean isFirst() {
         return isFirst;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
+
+    public void setClientState(int clientState) {
+        this.clientState = clientState;
     }
 }

@@ -113,6 +113,8 @@ public class GameController {
                 new ButtonType("exist", ButtonBar.ButtonData.YES));
         alert.titleProperty().set("inform");
         alert.headerTextProperty().set(msg);
+        wait = true;
+        disable = true;
         Optional<ButtonType> buttonType = alert.showAndWait();
         if (buttonType.isEmpty()) {
             return;

@@ -36,10 +36,6 @@
 
     </VBox>
 
-    <HBox alignment="CENTER">
-        <Button fx:id="start" text="start" onAction="#startGame"/>
-    </HBox>
-
 
 </VBox>
 
