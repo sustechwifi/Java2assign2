@@ -72,7 +72,6 @@ public class ClientApplication extends Application {
                     " | total game : " + user.getCount()
             );
             controller.info.setFont(new Font("仿宋", 15));
-            System.out.println(user);
         }
         gameStage = stage;
         stage.show();
@@ -91,7 +90,6 @@ public class ClientApplication extends Application {
         stage.setResizable(true);
         stage.setScene(primaryScene);
         var controller = (GameController) fxmlLoader.getController();
-        System.out.println(s);
         controller.s = s;
         controller.in = in;
         controller.out = out;

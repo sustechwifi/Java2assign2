@@ -13,7 +13,6 @@ public class JdbcUtil {
         try {
             Class.forName(DRIVER);
             connection =  DriverManager.getConnection(URL,USERNAME,PASSWORD);
-            System.out.println("connect successfully!");
         } catch (Exception e) {
             e.printStackTrace();
         }

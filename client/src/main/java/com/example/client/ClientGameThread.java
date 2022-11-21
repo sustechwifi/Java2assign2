@@ -26,10 +26,10 @@ public class ClientGameThread extends Thread {
     }
 
     public void send() {
-        System.out.println("send " + pos + " to server");
         out.println("playing");
         out.println(pos);
         out.println("EOF");
+        System.out.println("Against player's turn");
     }
 
     public void over(){
@@ -57,12 +57,11 @@ public class ClientGameThread extends Thread {
     public void get() {
         try {
             String result, tmp = null;
-            System.out.println(in);
             while (!"EOF".equals(result = in.nextLine())) {
                 tmp = result;
             }
             res = Integer.parseInt(tmp);
-            System.out.println("get " + res + " from server");
+            System.out.println("Your turn");
         } catch (NumberFormatException e) {
             res = -1;
         } catch (Exception e) {

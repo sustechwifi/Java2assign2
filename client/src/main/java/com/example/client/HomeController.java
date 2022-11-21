@@ -57,16 +57,13 @@ public class HomeController {
     private boolean isFirst;
 
 
-
     @FXML
     public void prepare() throws Exception {
         out.println("prepare");
         out.println(this.user.getUsername());
         String msg = in.nextLine();
-        System.out.println(msg);
         if ("connect".equals(msg)) {
             msg = in.nextLine();
-            System.out.println(msg);
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION,msg,
                     new ButtonType("reject", ButtonBar.ButtonData.NO),
                     new ButtonType("accept", ButtonBar.ButtonData.YES));
@@ -84,7 +81,6 @@ public class HomeController {
                 out.println("reject");
                 res = "You have rejected";
             }
-            System.out.println(res);
         }
     }
 
@@ -97,8 +93,6 @@ public class HomeController {
         String response = in.nextLine();
         if ("yes".equals(response)){
             String res = in.nextLine();
-            System.out.println(res);
-            System.out.println("game start");
             isFirst = true;
             startGame();
         }else{

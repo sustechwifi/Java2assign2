@@ -43,8 +43,6 @@ public class ClientBean extends Thread {
         clientState = 0;
         this.in = in;
         this.out = out;
-        System.out.println(in);
-        this.out.println("Hello client,please wait patiently");
     }
 
     @SuppressWarnings("all")
@@ -73,7 +71,7 @@ public class ClientBean extends Thread {
                         var againstIn = another.getIn();
                         against.println("connect");
                         against.println("Player[" + this.user + "] want to play with you.");
-                        String res = "accept";
+                        String res = "game start";
                         //res = againstIn.nextLine();
                         System.out.println(res);
                         against.println(res);

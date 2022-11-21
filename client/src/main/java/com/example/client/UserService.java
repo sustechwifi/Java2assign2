@@ -17,7 +17,6 @@ public class UserService {
             preparedStatement.setString(2, user.getPassword());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
-                System.out.println("login successfully");
                 return true;
             } else {
                 System.out.println("username or password is incorrect");

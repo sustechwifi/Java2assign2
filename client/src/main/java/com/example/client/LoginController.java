@@ -82,6 +82,8 @@ public class LoginController {
             in = new Scanner(s.getInputStream(), StandardCharsets.UTF_8);
             out = new PrintWriter(new OutputStreamWriter(
                     s.getOutputStream(), StandardCharsets.UTF_8), true);
+            System.out.println(in.nextLine());
+            //Connect to server successfully,please choose a player or click prepare button
             out.println(InetAddress.getLocalHost());
         } catch (IOException e) {
             String msg = "The server is no working!";
@@ -103,15 +105,6 @@ public class LoginController {
             alert.showAndWait();
             return false;
         }
-        Runnable r = () -> {
-            try {
-                String msg = in.nextLine();
-                System.out.println(msg);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        };
-        executorService.submit(r);
         return true;
     }
 

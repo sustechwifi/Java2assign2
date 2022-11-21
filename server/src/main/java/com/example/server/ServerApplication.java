@@ -1,6 +1,7 @@
 package com.example.server;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -25,8 +26,8 @@ public class ServerApplication extends Application {
     private ServerSocket serverSocket;
 
     ExecutorService executorService = new ThreadPoolExecutor(
-            2,
-            2,
+            50,
+            50,
             0, TimeUnit.SECONDS,
             new ArrayBlockingQueue<>(512),
             new ThreadPoolExecutor.DiscardPolicy());
@@ -38,13 +39,13 @@ public class ServerApplication extends Application {
                 serverSocket = new ServerSocket(18080);
                 while (true) {
                     Socket incoming = serverSocket.accept();
-                    System.out.println("client address:" + incoming);
+                    System.out.println("welcome client:" + incoming);
                     var in = new Scanner(incoming.getInputStream(), StandardCharsets.UTF_8);
                     var out = new PrintWriter(new OutputStreamWriter(
                             incoming.getOutputStream(), StandardCharsets.UTF_8), true);
+                    out.println("Connect to server successfully,please choose a player or click prepare button");
                     String clientAddress = in.nextLine();
                     String user = in.nextLine();
-                    System.out.println(clientAddress);
                     String response = "yes";
                     if (view.users.containsKey(user)){
                         response = "no";
@@ -52,13 +53,13 @@ public class ServerApplication extends Application {
                     out.println(response);
                     onlineCount++;
                     String msg = "(waiting)";
-                    var newUser = new ClientBean(user, msg, incoming, onlineCount % 2 == 0,in,out);
+                    var newUser = new ClientBean(user, msg, incoming, (onlineCount % 2 == 0),in,out);
                     view.users.put(user, newUser);
                     view.reLoadUserList();
                     executorService.submit(newUser);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+
             }
         }
     }
@@ -76,6 +77,11 @@ public class ServerApplication extends Application {
         stage.setScene(scene);
         view = fxmlLoader.getController();
         stage.show();
+        stage.setOnCloseRequest(event -> {
+            System.out.print("监听到窗口关闭");
+            Platform.exit();
+            System.exit(0);
+        });
     }
 
 

@@ -32,7 +32,11 @@ public class ViewController {
             ClientBean u = users.get(user);
             sb.append(u.getUser()).append(u.getMsg()).append(" \n");
         }
-        list.setText(sb.toString());
+        try {
+            list.setText(sb.toString());
+        } catch (Exception ignored) {
+
+        }
     }
 
     @FXML

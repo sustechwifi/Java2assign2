@@ -3,7 +3,6 @@ package com.example.client;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -14,15 +13,16 @@ import javafx.scene.text.Text;
 
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
+@SuppressWarnings("all")
 public class GameController {
     private boolean isCircleTurner = false;
     private static final String CIRCLE_TURNER = "O";
@@ -178,7 +178,13 @@ public class GameController {
                 new ButtonType("confirm", ButtonBar.ButtonData.YES));
         alert.titleProperty().set("inform");
         alert.headerTextProperty().set(response);
-        alert.showAndWait();
+        System.out.println(response);
+        System.out.println("Client will exit 5 second later!");
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         ClientApplication.close();
     }
 
@@ -187,8 +193,6 @@ public class GameController {
         client.start();
         client.join();
         System.out.println("game over");
-        System.out.println("isCircle:" + isCircle);
-        System.out.println(Arrays.deepToString(board));
     }
 
     private void control(int c) {
@@ -224,28 +228,32 @@ public class GameController {
     }
 
     public void init() {
+        AtomicBoolean flag = new AtomicBoolean(true);
         Task<Void> task = new Task<>() {
             @Override
             public Void call() throws Exception {
-                while (true) {
+                while (flag.get()) {
                     ClientGameThread client = new ClientGameThread(0, 1, in, out);
                     client.start();
                     client.join();
                     Platform.runLater(() -> {
                         try {
                             handle(client.res);
-                            System.out.println(client.res);
                             if (judge()) {
                                 gameOver();
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
+                            flag.set(false);
                         }
                     });
                 }
+                return null;
             }
         };
-        executorService.submit(task);
+        if (flag.get()) {
+            executorService.submit(task);
+        }
     }
 
     public void get() throws Exception {
@@ -270,7 +278,6 @@ public class GameController {
             }
             isCircleTurner = !isCircleTurner;
             btn1.setDisable(true);
-            System.out.println(1);
             if (!disable) {
                 send();
             }
@@ -292,7 +299,6 @@ public class GameController {
             }
             isCircleTurner = !isCircleTurner;
             btn2.setDisable(true);
-            System.out.println(2);
         }
 
         if (!disable) {
@@ -315,7 +321,6 @@ public class GameController {
             }
             isCircleTurner = !isCircleTurner;
             btn3.setDisable(true);
-            System.out.println(3);
         }
 
         if (!disable) {
@@ -338,7 +343,6 @@ public class GameController {
             }
             isCircleTurner = !isCircleTurner;
             btn4.setDisable(true);
-            System.out.println(4);
         }
 
         if (!disable) {
@@ -361,7 +365,6 @@ public class GameController {
             }
             isCircleTurner = !isCircleTurner;
             btn5.setDisable(true);
-            System.out.println(5);
         }
 
         if (!disable) {
@@ -384,7 +387,6 @@ public class GameController {
             }
             isCircleTurner = !isCircleTurner;
             btn6.setDisable(true);
-            System.out.println(6);
         }
 
         if (!disable) {
@@ -407,7 +409,6 @@ public class GameController {
             }
             isCircleTurner = !isCircleTurner;
             btn7.setDisable(true);
-            System.out.println(7);
         }
 
         if (!disable) {
@@ -430,7 +431,6 @@ public class GameController {
             }
             isCircleTurner = !isCircleTurner;
             btn8.setDisable(true);
-            System.out.println(8);
         }
 
         if (!disable) {
@@ -453,7 +453,6 @@ public class GameController {
             }
             isCircleTurner = !isCircleTurner;
             btn9.setDisable(true);
-            System.out.println(9);
         }
 
         if (!disable) {
